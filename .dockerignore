@@ -1,0 +1,8 @@
+.env*
+.git
+.gitignore
+.dockerignore
+.node-version
+README*
+Dockerfile
+nodemon*
