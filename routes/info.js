@@ -4,18 +4,18 @@ var router = express.Router();
 const _ = require('lodash');
 const log = require('debug')('info');
 const pup = require('puppeteer');
+const superagent = require('superagent');
 
 const { PWD, NODE_ENV } = process.env;
 const useragent = require(`${PWD}/data/user-agent.json`);
-const selector = require(`${PWD}/helpers/selector.js`);
 
 function _expedia_info(account) {
-	return (async () => {
-        if( _.isNil(account) || _.isNil(account.url) ) {
-            return {
+    return new Promise(async (resolve, reject) => {
+        if( _.isNil(account) || _.isNil(account.url) || _.isEmpty(account.url) || _.isNil(account.webhookUrl) || _.isEmpty(account.webhookUrl) ) {
+            return reject({
                 status : false,
                 message: "Check your parameters data"
-            }
+            })
         }
 
         const browser = await pup.launch({ headless: _.includes(["production", "staging"], NODE_ENV) ? true : false, 
@@ -32,58 +32,42 @@ function _expedia_info(account) {
         const pages = await browser.pages();
         const page  = pages[0];
 
-        try {
-            await page.setViewport({ width: 1366, height: 768 });
-            await page.setUserAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36");
-            await page.goto(account.url, { waitUntil: "load", timeout: 0 });
-
-            let title = await page.evaluate(() => document.querySelector("div[data-stid='content-hotel-title']").innerText);
-            title = _.split(title, "\n");
-
-            let rooms = [];
+        // Check response continuously till browser close
+        page.on('response', async (res) => {
             try {
-                await page.waitForSelector("[data-stid='section-roomtype']", { visible: true, timeout: 10000 });
+                if( 
+                    res.url().includes('/graphql') && 
+                    res.request().method() == 'POST' && 
+                    res.request().postData().includes('PropertyInfoOffersBexFeatures') 
+                ) {
+                    const body = await res.json();
+                    console.log('body:', body);
+                    await superagent.post(account.webhookUrl).send(body).set('accept', 'json');
+                }
             } catch (err) {
-                try {
-                    await page.waitForSelector("[data-stid='property-offer-1']", { visible: true, timeout: 10000 });
-                } catch (err) {
-                    if( !_.includes(["production", "staging"], NODE_ENV) ) log('wait room list: %s', err);
-                    if( _.includes(["production", "staging"], NODE_ENV) ) await browser.close();
-                    return {
-                        status : false,
-                        message: "Section room list not existed"
-                    }
-                }
-
-                rooms = await selector._expedia_selector_2(page);
-                if( _.includes(["production", "staging"], NODE_ENV) ) await browser.close();
-                return {
-                    status: true,
-                    data  : {
-                        title,
-                        rooms
-                    }
-                }
+                console.error(res, err);
+                console.log(res, err);
             }
+        });
 
-            rooms = await selector._expedia_selector_1(page);
+        try {
+            await page.setUserAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36");
+            await page.goto(account.url);
+
             if( _.includes(["production", "staging"], NODE_ENV) ) await browser.close();
-            return {
-                status: true,
-                data  : {
-                    title,
-                    rooms
-                }
-            }
+            return resolve({
+                status : true,
+                message: "Check the usage of your webhook URL continuously, the server is scraping..."
+            })
         } catch (err) {
             if( !_.includes(["production", "staging"], NODE_ENV) ) log('err: %s', err);
             if( _.includes(["production", "staging"], NODE_ENV) ) await browser.close();
-            return {
+            return reject({
                 status : false,
                 message: err
-            };
+            })
         }
-	})()
+    })
 }
 
 router.post('/', async function(req, res) {
