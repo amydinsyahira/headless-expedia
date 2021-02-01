@@ -89,7 +89,7 @@ function _expedia_info(account) {
                     res.request().method() == 'POST' && 
                     res.request().postData().includes('PropertyInfoOffersBexFeatures') 
                 ) {
-                    await page.waitFor( _.random(1000, 2000) );
+                    await page.waitFor( _.random(2000, 3000) );
                     const body = await res.json();
                     
                     result = {
@@ -108,7 +108,7 @@ function _expedia_info(account) {
                     });
 
                     if( _.gte(rangeOfDays, 0) ) {
-                        await page.waitFor( _.random(2000, 3000) );
+                        await page.waitFor( _.random(3000, 4000) );
                         await page.waitForXPath('//button[@data-stid="date-stepper-button-check-in-next" and @disabled]', { hidden: true, timeout: 20000 });
                         const [nextday] = await page.$x('//button[@data-stid="date-stepper-button-check-in-next"]');
                         await nextday.click();
