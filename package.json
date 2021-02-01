@@ -11,6 +11,7 @@
     "deploy": "docker run --name headless-expedia --restart=always -d -p 7001:1717 headless-expedia:1.0.0"
   },
   "dependencies": {
+    "axios": "^0.21.1",
     "cookie-parser": "~1.4.3",
     "cors": "^2.8.5",
     "debug": "~2.6.9",
@@ -21,8 +22,7 @@
     "moment": "^2.29.1",
     "morgan": "~1.9.0",
     "pug": "2.0.0-beta11",
-    "puppeteer": "^3.3.0",
-    "superagent": "^5.3.1"
+    "puppeteer": "^3.3.0"
   },
   "devDependencies": {
     "mocha": "^5.1.1",
