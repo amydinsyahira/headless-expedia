@@ -40,15 +40,16 @@ function _expedia_info(account) {
 
         const browser = await pup.launch({ 
             headless: _.includes(["production", "staging"], NODE_ENV) ? true : false, 
-            executablePath: process.env.CHROME_BIN || null, 
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
                 '--disable-accelerated-2d-canvas',
                 '--disable-gpu',
+                '--window-size=1024,768',
                 '--incognito',
-            ]
+            ],
+            ...(process.env.CHROME_BIN && { executablePath: process.env.CHROME_BIN }),
         });
         const ua = useragent[ _.random(0, _.size(useragent)-1) ];
         if( !_.includes(["production", "staging"], NODE_ENV) ) log("ua: %s", ua);
