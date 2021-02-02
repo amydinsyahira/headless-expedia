@@ -60,6 +60,7 @@ function _expedia_info(account) {
             let [url] = _.split(account.url, '?');
                 url   = `${url}?chkin=${account.startDate}&chkout=${account.endDate}`;
 
+            await page.setViewport({ width: 1024, height: 768 });
             await page.setUserAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36");
             await page.goto(url, { waitUntil: ['load', 'domcontentloaded'], timeout: 0 });
 
@@ -78,10 +79,12 @@ function _expedia_info(account) {
             rangeOfDays -= 1;
         } catch (err) {
             log(err);
+            const ssImg = await page.screenshot({ fullPage: true, encoding: 'base64' });
             if( _.includes(["production", "staging"], NODE_ENV) ) await browser.close();
             return reject({
-                status : false,
-                message: err
+                status    : false,
+                message   : _.toString(err),
+                screenshot: ssImg
             })
         }
 
