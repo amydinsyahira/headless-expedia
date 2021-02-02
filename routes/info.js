@@ -38,15 +38,18 @@ function _expedia_info(account) {
         else account.startDate = moment(account.startDate).subtract(1, 'day').format('YYYY-MM-DD');
         account.endDate = moment(account.startDate).add(1, 'day').format('YYYY-MM-DD');
 
-        const browser = await pup.launch({ headless: _.includes(["production", "staging"], NODE_ENV) ? true : false, 
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--disable-gpu',
-            '--incognito',
-        ]});
+        const browser = await pup.launch({ 
+            headless: _.includes(["production", "staging"], NODE_ENV) ? true : false, 
+            executablePath: process.env.CHROME_BIN || null, 
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--disable-gpu',
+                '--incognito',
+            ]
+        });
         const ua = useragent[ _.random(0, _.size(useragent)-1) ];
         if( !_.includes(["production", "staging"], NODE_ENV) ) log("ua: %s", ua);
         
